@@ -1,0 +1,12 @@
+SIX Payment Page Initializer
+<script>
+  $.ajax({
+  url: <%= initialize_payment_page_path() %>,
+  method: 'get',
+  complete: function(a, b, c) {
+    console.log(a);
+    console.log(b);
+    console.log(c);
+  }
+  });
+</script>
