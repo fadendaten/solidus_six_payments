@@ -3,20 +3,19 @@ module Spree
   class PaymentPageController < StoreController
 
     def initialize_payment_page
-      raise "init"
-
       uri = URI.parse('https://test.saferpay.com/api/Payment/v1/PaymentPage/Initialize')
 
+      https = Net::HTTP.new(uri.host, uri.port)
+      https.use_ssl = true
+
       request = Net::HTTP::Post.new(uri.path, {'Content-Type' => 'application/json'})
-      request.use_ssl = true
       request.body = six_payment_page_params.to_json
       request.basic_auth 'API_245294_08700063', 'mei4Xoozle4doi0A'
 
-      response = http.request(request)
+      response = https.request(request)
 
-      require 'pry'; binding.pry
-
-      redirect_to response['RedirectUrl']
+      body = JSON.parse(response.body)
+      redirect_to body['RedirectUrl']
     end
 
 
