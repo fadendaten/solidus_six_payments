@@ -2,7 +2,7 @@ module Spree
 
   class PaymentPageController < StoreController
 
-    def initialize_payment_page
+    def initialize_payment
       uri = URI.parse('https://test.saferpay.com/api/Payment/v1/PaymentPage/Initialize')
 
       https = Net::HTTP.new(uri.host, uri.port)
@@ -17,7 +17,6 @@ module Spree
       body = JSON.parse(response.body)
       redirect_to body['RedirectUrl']
     end
-
 
     private
 

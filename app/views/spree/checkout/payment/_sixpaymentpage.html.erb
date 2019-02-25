@@ -1,13 +1,8 @@
-DANI
-SIX Payment Page Initializer
 <script>
-  $.ajax({
-  url: <%= initialize_payment_page_path() %>,
-  method: 'get',
-  complete: function(a, b, c) {
-    console.log(a);
-    console.log(b);
-    console.log(c);
-  }
+  $(window).bind("message", function (e) {
+    if (e.originalEvent.data.height <= 450) return;
+    $("#six-payment-container").css("height", e.originalEvent.data.height + "px");
   });
 </script>
+
+<iframe width='100%' height='550px' id="six-payment-container" src="<%= @redirect_url %>" frameborder="0"></iframe>
