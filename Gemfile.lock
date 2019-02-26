@@ -2,8 +2,8 @@ PATH
   remote: .
   specs:
     solidus_six_payments (0.1.0)
-      rails (~> 5.1.0)
-      solidus (>= 2.0, < 3)
+      rails
+      solidus
 
 GEM
   remote: https://rubygems.org/
