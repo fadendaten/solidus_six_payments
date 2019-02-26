@@ -4,20 +4,29 @@ $:.push File.expand_path("../lib", __FILE__)
 require "solidus_six_payments/version"
 
 # Describe your gem and declare its dependencies:
-Gem::Specification.new do |s|
-  s.name        = "solidus_six_payments"
-  s.version     = SolidusSixPayments::VERSION
-  s.authors     = ["Felix Langenegger"]
-  s.email       = ["felix.langenegger@fadendaten.ch"]
-  s.homepage    = "http://fadendaten.ch"
-  s.summary     = "Summary of SolidusSixPayments."
-  s.description = "Description of SolidusSixPayments."
-  s.license     = "MIT"
+Gem::Specification.new do |spec|
+  spec.name        = "solidus_six_payments"
+  spec.version     = SolidusSixPayments::VERSION
+  spec.authors     = ["Felix Langenegger"]
+  spec.email       = ["felix.langenegger@fadendaten.ch"]
+  spec.homepage    = "http://fadendaten.ch"
+  spec.summary     = "Summary of SolidusSixPayments."
+  spec.description = "Description of SolidusSixPayments."
+  spec.license     = "MIT"
 
-  s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
+  spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
-  s.add_dependency "rails"#, "~> 5.1.0"
-  s.add_dependency 'solidus'#, ['>= 2.0', '< 3']
+  spec.add_dependency "rails"#, "~> 5.1.0"
+  spec.add_dependency 'solidus'#, ['>= 2.0', '< 3']
 
-  s.add_development_dependency "sqlite3", '~> 1.3.0'
+  spec.add_development_dependency "sqlite3", '~> 1.3.0'
+
+  spec.add_development_dependency "rake", "~> 12.3"
+  spec.add_development_dependency "rspec", "~> 3.8"
+  spec.add_development_dependency "rspec-rails", "~> 3.8"
+
+  spec.add_development_dependency "rdoc", "~> 6.1"
+  spec.add_development_dependency "vcr", "~> 4.0"
+  spec.add_development_dependency "dotenv", "~> 2.7"
+  spec.add_development_dependency 'pry', '~> 0.12'
 end
