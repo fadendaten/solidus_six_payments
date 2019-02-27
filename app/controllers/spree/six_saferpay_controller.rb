@@ -1,15 +1,56 @@
 module Spree
   class SixSaferpayController < StoreController
 
+    def initialize_payment
+      # TODO CREATE PAYMENT
+      payment_page = initialize_payment_page
+      token = payment_page[:Token]
+
+      log payment_page.inspect
+
+      checkout = SolidusSixPayments::SaferpayCheckout.create!(order: current_order, token: token)
+
+      @redirect_url = payment_page[:RedirectUrl]
+
+      redirect_to @redirect_url
+    end
+
     def confirm
+      # TODO: AUTHORIZE PAYMENT
       @order = current_order
       checkout = SolidusSixPayments::SaferpayCheckout.where(order: @order).order(:created_at).last
 
-      @asserted_payment = assert_payment_request(checkout.token)
+      asserted_payment = assert_payment_request(checkout.token)
 
-      # TODO: AUTHORIZE PAYMENT
-      require 'pry'; binding.pry
-      redirect_to after_authorize_url(@order)
+
+      transaction = asserted_payment[:Transaction]
+      payment_means = asserted_payment[:PaymentMeans]
+      payer = asserted_payment[:Payer]
+      liability = asserted_payment[:Liability]
+      dcc = asserted_payment[:Dcc]
+
+      payment_attributes = {
+        amount: transaction[:Amount][:Value],
+        number: transaction[:Id],
+        payment_method_id: Spree::PaymentMethod.find_by(type: 'Spree::PaymentMethod::SixPaymentPage').id,
+        source_attributes: {
+          imported: true, # necessary because we don't want to validate CVV
+          number: payment_means[:DisplayText],
+          month: payment_means[:Card][:ExpMonth],
+          year: payment_means[:Card][:ExpMonth],
+          cc_type: payment_means[:Brand][:PaymentMethod],
+          name: payment_means[:Card][:HolderName],
+        }
+      }
+
+      payment = Spree::PaymentCreate.new(@order, payment_attributes, request_env: request.headers.env).build
+      if payment.save!
+
+        payment.update_attributes(number: transaction[:Id])
+        @order.next! if @order.payment?
+      end
+
+      redirect_to order_state_checkout_path(@order)
     end
 
     def cancel
@@ -17,6 +58,45 @@ module Spree
     end
 
     private
+
+    def initialize_payment_page
+      uri = URI.parse('https://test.saferpay.com/api/Payment/v1/PaymentPage/Initialize')
+
+      https = Net::HTTP.new(uri.host, uri.port)
+      https.use_ssl = true
+
+      request = Net::HTTP::Post.new(uri.path, {'Content-Type' => 'application/json'})
+
+      request.body = initialize_six_payment_page_params.to_json
+
+      request.basic_auth 'API_245294_08700063', 'mei4Xoozle4doi0A'
+
+      JSON.parse(https.request(request).body).with_indifferent_access
+    end
+
+    def initialize_six_payment_page_params
+      {
+        "RequestHeader": {
+          "SpecVersion": "1.10",
+          "CustomerId": "245294",
+          "RequestId": "T1",
+          "RetryIndicator": 0
+        },
+        "TerminalId": "17925560",
+        "Payment": {
+          "Amount": {
+            "Value": "100",
+            "CurrencyCode": "CHF"
+          },
+          "OrderId": "R123456",
+          "Description": "Auftrag für NILE"
+        },
+        "ReturnUrls": {
+          "Success": 'http://localhost:3000/six_saferpay/confirm',#'confirm_saferpay_url(host: 'localhost:3000'),
+          "Fail": 'http://localhost:3000/six_saferpay/cancel'#cancel_saferpay_url(host: 'localhost:3000'),
+        }
+      }.with_indifferent_access
+    end
 
     def assert_payment_request(token)
       uri = URI.parse('https://test.saferpay.com/api/Payment/v1/PaymentPage/Assert')
@@ -45,7 +125,6 @@ module Spree
     end
 
     def after_authorize_url(order)
-      order_state_checkout_path(order)
     end
 
     def after_cancel_url(order)
@@ -56,73 +135,8 @@ module Spree
       Spree::Core::Engine.routes.url_helpers.checkout_state_path(order.state)
     end
 
-
-    # def confirm
-    #   checkout_token = affirm_params[:checkout_token]
-    #   order = Spree::Order.find(affirm_params[:order_id])
-
-    #   if !checkout_token
-    #     return redirect_to checkout_state_path(order.state), notice: "Invalid order confirmation data passed in"
-    #   end
-
-    #   if order.complete?
-    #     return redirect_to spree.order_path(order), notice: "Order is already in complete state"
-    #   end
-
-    #   affirm_checkout = SolidusAffirm::Checkout.new(token: checkout_token)
-
-    #   affirm_checkout.transaction do
-    #     if affirm_checkout.save!
-    #       payment = order.payments.create!({
-    #         payment_method_id: affirm_params[:payment_method_id],
-    #         source: affirm_checkout
-    #       })
-    #       hook = SolidusAffirm::Config.callback_hook.new
-    #       hook.authorize!(payment)
-    #       redirect_to hook.after_authorize_url(order)
-    #     end
-    #   end
-    # end
-
-    # def cancel
-    #   order = Spree::Order.find(affirm_params[:order_id])
-    #   hook = SolidusAffirm::Config.callback_hook.new
-    #   redirect_to hook.after_cancel_url(order)
-    # end
-
-    # private
-
-    # def affirm_params
-    #   params.permit(:checkout_token, :payment_method_id, :order_id)
-    # end
-
+    def log(stuff)
+      puts stuff
+    end
   end
 end
-    
-# module SolidusAffirm
-  # module CallbackHook
-    # class Base
-    #   def authorize!(payment)
-    #     payment.process!
-    #     authorized_affirm = Affirm::Charge.find(payment.response_code)
-    #     payment.amount = authorized_affirm.amount / 100.0
-    #     payment.save!
-    #     payment.order.next! if payment.order.payment?
-    #   end
-
-    #   def after_authorize_url(order)
-    #     order_state_checkout_path(order)
-    #   end
-
-    #   def after_cancel_url(order)
-    #     order_state_checkout_path(order)
-    #   end
-
-    #   private
-
-    #   def order_state_checkout_path(order)
-    #     Spree::Core::Engine.routes.url_helpers.checkout_state_path(order.state)
-    #   end
-    # end
-  # end
-# end
