@@ -3,16 +3,26 @@ module Spree
 
     def initialize_payment
       # TODO CREATE PAYMENT
-      payment_page = initialize_payment_page
-      token = payment_page[:Token]
+      @order = current_order # TODO error handling
 
-      log payment_page.inspect
+      payment_page_initialize = SixSaferpay::PaymentPage::Initialize.new((@order.total * 100).to_i, @order.currency, @order.number, @order.to_s)
+
+      payment_page_response = SixSaferpay::Client.post(payment_page_initialize)
+
+      require 'pry'; binding.pry
+
+      payment_page = JSON.parse(payment_page_response.body).with_indifferent_access
+
+      # payment_page = initialize_payment_page
+      token = payment_page[:Token]
+      redirect_url = payment_page[:RedirectUrl]
 
       checkout = SolidusSixPayments::SaferpayCheckout.create!(order: current_order, token: token)
 
-      @redirect_url = payment_page[:RedirectUrl]
+      log payment_page.inspect
 
-      redirect_to @redirect_url
+
+      redirect_to redirect_url
     end
 
     def confirm
