@@ -4,7 +4,7 @@ module Spree
     preference :as_iframe, :boolean, default: false
 
     def gateway_class
-      ActiveMerchant::Billing::SixSaferpayGateway
+      ActiveMerchant::Billing::Gateways::SixSaferpayGateway
     end
 
     def payment_source_class

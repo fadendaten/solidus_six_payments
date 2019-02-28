@@ -1,5 +1,3 @@
-require 'lib/active_merchant/billing/gateways/six_saferpay_gateway'
-
 module SolidusSixPayments
   class InitializeSaferpayPaymentPageCheckout
 
@@ -14,11 +12,18 @@ module SolidusSixPayments
     end
 
     def call
-      payment_page_initialize = ActiveMerchant::Billing::SixSaferpayGateway.new.initialize_payment_page(order)
+      payment_page_initialize = ActiveMerchant::Billing::Gateways::SixSaferpayGateway.new.initialize_payment_page(order)
       if payment_page_initialize.success?
-        SolidusSixPayments::SaferpayCheckout.create!(order: order, token: response.token)
+        @success = payment_page_initialize.success?
+        @token = payment_page_initialize.params[:Token]
+        @redirect_url = payment_page_initialize.params[:RedirectUrl]
+        SolidusSixPayments::SaferpayCheckout.create!(order: order, token: token)
       end
-      payment_page_initialize
+      self
+    end
+
+    def success?
+      @success
     end
   end
 end

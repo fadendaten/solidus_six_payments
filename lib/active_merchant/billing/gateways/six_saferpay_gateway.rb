@@ -12,125 +12,126 @@ end
 
 module ActiveMerchant
   module Billing
-    class SixSaferpayGateway < Gateway
-      # * <tt>purchase(money, credit_card, options = {})</tt>
-      # * <tt>authorize(money, credit_card, options = {})</tt>
-      # * <tt>capture(money, authorization, options = {})</tt>
-      # * <tt>void(identification, options = {})</tt>
-      # * <tt>refund(money, identification, options = {})</tt>
-      # * <tt>verify(credit_card, options = {})</tt>
+    module Gateways
+      class SixSaferpayGateway < Gateway
+        # * <tt>purchase(money, credit_card, options = {})</tt>
+        # * <tt>authorize(money, credit_card, options = {})</tt>
+        # * <tt>capture(money, authorization, options = {})</tt>
+        # * <tt>void(identification, options = {})</tt>
+        # * <tt>refund(money, identification, options = {})</tt>
+        # * <tt>verify(credit_card, options = {})</tt>
 
-      attr_reader :saferpay_client
+        attr_reader :saferpay_client
 
-      def initialize(options = {})
-        SixSaferpay.configure do |config|
-          config.customer_id = '246353'#'245294'#ENV.fetch('SIX_SAFERPAY_CUSTOMER_ID')
-          config.terminal_id = '17942698'#'17925560'#ENV.fetch('SIX_SAFERPAY_TERMINAL_ID')
-          config.username = 'API_246353_14688433'#'API_245294_08700063'#ENV.fetch('SIX_SAFERPAY_USERNAME')
-          config.password = 'JsonApiPwd1_H7wv6aDA'#'mei4Xoozle4doi0A'#ENV.fetch('SIX_SAFERPAY_PASSWORD')
-          config.success_url = 'http://localhost:3000/saferpay_payment_page/success'#ENV.fetch('SIX_SAFERPAY_FAIL_URL')
-          config.fail_url = 'http://localhost:3000/saferpay_payment_page/fail'#ENV.fetch('SIX_SAFERPAY_FAIL_URL')
-          config.base_url = 'https://test.saferpay.com/api/'#ENV.fetch('SIX_SAFERPAY_BASE_URL')
-          config.css_url = ''#ENV.fetch('SIX_SAFERPAY_CSS_URL')
+        def initialize(options = {})
+          SixSaferpay.configure do |config|
+            config.customer_id = '246353'#'245294'#ENV.fetch('SIX_SAFERPAY_CUSTOMER_ID')
+            config.terminal_id = '17942698'#'17925560'#ENV.fetch('SIX_SAFERPAY_TERMINAL_ID')
+            config.username = 'API_246353_14688433'#'API_245294_08700063'#ENV.fetch('SIX_SAFERPAY_USERNAME')
+            config.password = 'JsonApiPwd1_H7wv6aDA'#'mei4Xoozle4doi0A'#ENV.fetch('SIX_SAFERPAY_PASSWORD')
+            config.success_url = 'http://localhost:3000/saferpay_payment_page/success'#ENV.fetch('SIX_SAFERPAY_FAIL_URL')
+            config.fail_url = 'http://localhost:3000/saferpay_payment_page/fail'#ENV.fetch('SIX_SAFERPAY_FAIL_URL')
+            config.base_url = 'https://test.saferpay.com/api/'#ENV.fetch('SIX_SAFERPAY_BASE_URL')
+            config.css_url = ''#ENV.fetch('SIX_SAFERPAY_CSS_URL')
+          end
         end
-      end
 
-      # For the given order, initialize a new PaymentPage
-      # @param [Spree::Order] order The order for which the payment is initialized
-      # @return [ActiveMerchant::Billing::Response]
-      def initialize_payment_page(order)
-        payment_page_initialize = SixSaferpay::PaymentPage::Initialize.new(
-          (order.total * 100).to_i,
-          order.currency,
-          order.number,
-          order.to_s
-        )
+        # For the given order, initialize a new PaymentPage
+        # @param [Spree::Order] order The order for which the payment is initialized
+        # @return [ActiveMerchant::Billing::Response]
+        def initialize_payment_page(order)
+          payment_page_initialize = SixSaferpay::PaymentPage::Initialize.new(
+            (order.total * 100).to_i,
+            order.currency,
+            order.number,
+            order.to_s
+          )
 
-        saferpay_response = SixSaferpay::Client.post(payment_page_initialize)
+          saferpay_response = SixSaferpay::Client.post(payment_page_initialize)
 
-        response_hash = JSON.parse(saferpay_response.body).with_indifferent_access
-        response = InitializeResponse.new(response_hash[:Token], response_hash[:RedirectUrl])
+          response_hash = JSON.parse(saferpay_response.body).with_indifferent_access
+          response = InitializeResponse.new(response_hash[:Token], response_hash[:RedirectUrl])
 
-        # TODO: Find out if we need to pass options
-        ActiveMerchant::Billing::Response.new(
-          true, 
-          "Saferpay Payment Page initialized successfully, token: #{response.token}",
-          response_hash,
-          # {
-          #   test:,
-          #   authorization:,
-          #   fraud_review:,
-          #   error_code:,
-          #   emv_authorization:,
-          #   avs_result:,
-          #   cvv_result:,
-          # }
-        )
+          # TODO: Find out if we need to pass options
+          ActiveMerchant::Billing::Response.new(
+            true, 
+            "Saferpay Payment Page initialized successfully, token: #{response.token}",
+            response_hash,
+            # {
+            #   test:,
+            #   authorization:,
+            #   fraud_review:,
+            #   error_code:,
+            #   emv_authorization:,
+            #   avs_result:,
+            #   cvv_result:,
+            # }
+          )
 
-      # TODO: update error handler according to SixSaferpay gem Error classes
-      rescue StandardError => e
-        SolidusSixPayments::ErrorHandler.handle(e, level: :error)
+          # TODO: update error handler according to SixSaferpay gem Error classes
+        rescue StandardError => e
+          SolidusSixPayments::ErrorHandler.handle(e, level: :error)
 
-        # TODO: Find out if we need to pass options
-        ActiveMerchant::Billing::Response.new(
-          false, 
-          "Saferpay Payment Page could not be initialized",
-          response_hash,
-          # {
-          #   test:,
-          #   authorization:,
-          #   fraud_review:,
-          #   error_code:,
-          #   emv_authorization:,
-          #   avs_result:,
-          #   cvv_result:,
-          # }
-        )
-      end
-
-      def assert(token)
-        SolidusSixPayments::AssertSaferpayPaymentPage.call(order)
-      end
-
-      # Defined by solidus to combine authorize + capture
-      def purchase(amount, payment_source, options = {})
-        auth_response = authorize(amount, payment_source, options)
-        if auth_response.success?
-          capture(amount, payment_source.order_id, options)
-        else
-          auth_response
+          # TODO: Find out if we need to pass options
+          ActiveMerchant::Billing::Response.new(
+            false, 
+            "Saferpay Payment Page could not be initialized",
+            response_hash,
+            # {
+            #   test:,
+            #   authorization:,
+            #   fraud_review:,
+            #   error_code:,
+            #   emv_authorization:,
+            #   avs_result:,
+            #   cvv_result:,
+            # }
+          )
         end
-      end
 
-      # Allocate the reqested amount for a payment
-      def authorize(amount, credit_card_payment_source, options = {})
-        raise "#authorize has not been implemented yet for this gateway"
-        # TODO:
-        # - post request
-        # - parse response
-        # - handle errors
-        # - ???
-        # - return AM response
-      end
+        def assert(token)
+          SolidusSixPayments::AssertSaferpayPaymentPage.call(order)
+        end
 
-      # Finalize an authorized payment
-      def capture(amount, authorization, options={})
-        # TODO:
-        # - post request
-        # - parse response
-        # - handle errors
-        # - ???
-        # - return AM response
-      end
+        # Defined by solidus to combine authorize + capture
+        def purchase(amount, payment_source, options = {})
+          auth_response = authorize(amount, payment_source, options)
+          if auth_response.success?
+            capture(amount, payment_source.order_id, options)
+          else
+            auth_response
+          end
+        end
 
-      # Release authorized uncaptured payments
-      def void(identification, options = {})
-        # TODO:
-        # - ???
-      end
+        # Allocate the reqested amount for a payment
+        def authorize(amount, credit_card_payment_source, options = {})
+          raise "#authorize has not been implemented yet for this gateway"
+          # TODO:
+          # - post request
+          # - parse response
+          # - handle errors
+          # - ???
+          # - return AM response
+        end
+
+        # Finalize an authorized payment
+        def capture(amount, authorization, options={})
+          # TODO:
+          # - post request
+          # - parse response
+          # - handle errors
+          # - ???
+          # - return AM response
+        end
+
+        # Release authorized uncaptured payments
+        def void(identification, options = {})
+          # TODO:
+          # - ???
+        end
 
 
-      # Return previously captured payment
+        # Return previously captured payment
       def refund(amount, order_id, options={})
         # TODO:
         # - post request
@@ -145,6 +146,7 @@ module ActiveMerchant
         # TODO:
         # - ???
       end
+    end
     end
   end
 end
