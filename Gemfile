@@ -3,9 +3,10 @@ source 'https://rubygems.org'
 # Declare your gem's dependencies in solidus_six_payments.gemspec.
 # Bundler will treat runtime dependencies like base dependencies, and
 # development dependencies will be added by default to the :development group.
+gem 'six_saferpay', git: 'git@github.com:fadendaten/six_saferpay.git', branch: 'master'
+
 gemspec
 
-gem 'six_saferpay', git: 'git@github.com:fadendaten/six_saferpay.git', branch: 'master'
 
 # Declare any dependencies that are still in development here instead of in
 # your gemspec. These might include edge Rails or gems from your path or
