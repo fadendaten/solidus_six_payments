@@ -3,10 +3,14 @@ module Spree
 
     def init
       load_order
-      payment_page_initialize = SolidusSixPayments::InitializeSaferpayPaymentPage.call(@order)
-      
-      redirect_url = payment_page_initialize.redirect_url
-      render json: { redirect_url: redirect_url }
+      payment_page_initialize = SolidusSixPayments::InitializeSaferpayPaymentPageCheckout.call(@order)
+
+      if payment_page_initialize.success?
+        redirect_url = payment_page_initialize.redirect_url
+        render json: { redirect_url: redirect_url }
+      else
+        render json: { errors: "Payment could not be initialized" }, status: 422
+      end
     end
 
     def success
@@ -39,10 +43,6 @@ module Spree
 
     def order_checkout_path(state)
       Spree::Core::Engine.routes.url_helpers.checkout_state_path(state)
-    end
-
-    def log(stuff)
-      puts stuff
     end
   end
 end

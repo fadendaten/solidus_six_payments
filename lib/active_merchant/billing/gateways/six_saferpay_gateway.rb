@@ -1,24 +1,6 @@
 require 'activemerchant'
 require 'six_saferpay'
 
-class InitializePaymentPageError < Spree::Core::GatewayError
-  attr_accessor :error, :level, :metadata
-
-  def initialize(error, level: :error, metadata: {})
-    @error = error
-    @level = level
-    @metadata = metadata
-  end
-
-  def add_metadata(metadata_hash)
-    @metadata.merge!(metadata_hash)
-  end
-
-  def user_message
-    I18n.t('errors.initialize_payment_error')
-  end
-end
-
 # TODO: PLACEHOLDER UNTIL API IS FINISHED
 class InitializeResponse
   attr_reader :token, :redirect_url
@@ -30,7 +12,7 @@ end
 
 module ActiveMerchant
   module Billing
-    class SixSaferpayGateway < Spree::PaymentMethod::CreditCard
+    class SixSaferpayGateway < Gateway
       # * <tt>purchase(money, credit_card, options = {})</tt>
       # * <tt>authorize(money, credit_card, options = {})</tt>
       # * <tt>capture(money, authorization, options = {})</tt>
@@ -53,8 +35,10 @@ module ActiveMerchant
         end
       end
 
+      # For the given order, initialize a new PaymentPage
+      # @param [Spree::Order] order The order for which the payment is initialized
+      # @return [ActiveMerchant::Billing::Response]
       def initialize_payment_page(order)
-        # 1. post request
         payment_page_initialize = SixSaferpay::PaymentPage::Initialize.new(
           (order.total * 100).to_i,
           order.currency,
@@ -62,28 +46,45 @@ module ActiveMerchant
           order.to_s
         )
 
-        begin
-          saferpay_response = SixSaferpay::Client.post(payment_page_initialize)
+        saferpay_response = SixSaferpay::Client.post(payment_page_initialize)
 
-          # 2. parse response
-          response_hash = JSON.parse(saferpay_response.body).with_indifferent_access
-          response = InitializeResponse.new(response_hash[:Token], response_hash[:RedirectUrl])
+        response_hash = JSON.parse(saferpay_response.body).with_indifferent_access
+        response = InitializeResponse.new(response_hash[:Token], response_hash[:RedirectUrl])
 
-          # 3. handle errors
-          # TODO: update error handler according to SixSaferpay Errors
-        rescue StandardError => e
-          SolidusSixPayments::ErrorHandler.handle(e, level: :error)
-          # propagate GatewayError upwards to let default solidus behaviour take care of it
-          raise InitializePaymentPageError.new(e, metadata: {order: order, payment_page_initialize_response: response_hash})
-        end
-
-        # 4. create SaferpayCheckout object
-        SolidusSixPayments::SaferpayCheckout.create!(order: order, token: response.token)
-
-        # 5. return AM response
+        # TODO: Find out if we need to pass options
         ActiveMerchant::Billing::Response.new(
           true, 
           "Saferpay Payment Page initialized successfully, token: #{response.token}",
+          response_hash,
+          # {
+          #   test:,
+          #   authorization:,
+          #   fraud_review:,
+          #   error_code:,
+          #   emv_authorization:,
+          #   avs_result:,
+          #   cvv_result:,
+          # }
+        )
+
+      # TODO: update error handler according to SixSaferpay gem Error classes
+      rescue StandardError => e
+        SolidusSixPayments::ErrorHandler.handle(e, level: :error)
+
+        # TODO: Find out if we need to pass options
+        ActiveMerchant::Billing::Response.new(
+          false, 
+          "Saferpay Payment Page could not be initialized",
+          response_hash,
+          # {
+          #   test:,
+          #   authorization:,
+          #   fraud_review:,
+          #   error_code:,
+          #   emv_authorization:,
+          #   avs_result:,
+          #   cvv_result:,
+          # }
         )
       end
 
@@ -113,7 +114,7 @@ module ActiveMerchant
       end
 
       # Finalize an authorized payment
-      def capture(amount, authorization?, options={})
+      def capture(amount, authorization, options={})
         # TODO:
         # - post request
         # - parse response
@@ -123,7 +124,7 @@ module ActiveMerchant
       end
 
       # Release authorized uncaptured payments
-      def void(identification?, options = {})
+      def void(identification, options = {})
         # TODO:
         # - ???
       end
@@ -141,7 +142,8 @@ module ActiveMerchant
 
       # ???
       def verify(credit_card_payment_source, options = {})
-
+        # TODO:
+        # - ???
       end
     end
   end

@@ -11,10 +11,9 @@ var SaferpayPaymentPage = function() {
         callback(redirectUrl);
       },
 
-      error: function(data) {
-        debugger;
-        var response = $.parseJSON(data);
-        console.log(response);
+      error: function(xhr) {
+        var errors = $.parseJSON(xhr.responseText).errors;
+        console.log(errors);
         return false;
       },
     })
@@ -24,7 +23,10 @@ var SaferpayPaymentPage = function() {
     $('#saferpay-payment-container').attr('src', redirectUrl);
 
     $(window).bind("message", function (e) {
-      if (e.originalEvent.data.height <= 450) return;
+      if (e.originalEvent.data.height <= 450) {
+        return;
+      }
+
       $("#saferpay-payment-container").css("height", e.originalEvent.data.height + "px");
     });
   }
