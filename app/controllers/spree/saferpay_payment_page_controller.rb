@@ -4,16 +4,9 @@ module Spree
     def init
       load_order
       payment_page_initialize = SolidusSixPayments::InitializeSaferpayPaymentPage.call(@order)
-
-      redirect_to order_checkout_path(@order.state)
-      # redirect_to payment_page_initialize.redirect_url
-    end
-
-    def iframe_payment_page
-      load_order
-      payment_page_initialize = SolidusSixPayments::InitializeSaferpayPaymentPage.call(@order)
-
-      render partial: 'saferpay_payment_page_iframe', locals: { redirect_url: payment_page_initialize.redirect_url }
+      
+      redirect_url = payment_page_initialize.redirect_url
+      render json: { redirect_url: redirect_url }
     end
 
     def success

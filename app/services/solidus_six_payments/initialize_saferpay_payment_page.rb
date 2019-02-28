@@ -12,11 +12,6 @@ module SolidusSixPayments
     end
 
     def call
-      unless order.payment?
-        raise "Order #{order} with state #{order.state} is not ready for payments!"
-        return
-      end
-
       payment_page_response = request_payment_page_initialize
 
       @token = payment_page_response[:Token]

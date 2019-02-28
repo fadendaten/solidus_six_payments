@@ -1,5 +1,5 @@
 module SolidusSixPayments
-  class CaptureSaferpayPaymentPage
+  class CaptureSaferpayTransaction
 
     attr_reader :transaction_id
 

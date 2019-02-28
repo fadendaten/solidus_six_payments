@@ -1,6 +1,6 @@
 GIT
   remote: git@github.com:fadendaten/six_saferpay.git
-  revision: 41d3b58da3b1474cdda1c0d78ae59ab569a14d4b
+  revision: 8cfe3e7e20e5cd15356a8544db3916d1b63099db
   branch: master
   specs:
     six_saferpay (0.0.1)

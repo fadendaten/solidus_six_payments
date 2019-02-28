@@ -1,8 +1,10 @@
 module Spree
   class PaymentMethod::SaferpayPaymentPage < Spree::PaymentMethod::CreditCard
 
+    preference :as_iframe, :boolean, default: false
+
     def gateway_class
-      PaymentMethod::SaferpayPaymentPage
+      ActiveMerchant::Billing::SixSaferpayGateway
     end
 
     def payment_source_class
@@ -18,27 +20,23 @@ module Spree
     end
 
 
-    def authorize(cents, source, gateway_options)
-      require 'pry'; binding.pry
+    # NOTE: This will be handled by the SixSaferpayGateway
+    # def authorize(cents, source, gateway_options)
+    #   raise "Authorize action is not supported for Saferpay Payment Page because the Authorization happens automatically when submitting the Saferpay Payment Page.\nYou may be looking for the Saferpay Transaction payment method."
+    # end
 
-      params = {}
-      options = {}
+    # NOTE: This will be handled by the SixSaferpayGateway
+    # def purchase(cents, source, gateway_options)
+    #   params = {}
+    #   options = {}
 
-      ActiveMerchant::Billing::Response.new(true, "Authorize Successful", params, options)
-    end
-
-    def purchase(cents, source, gateway_options)
-
-      params = {}
-      options = {}
-
-      payment = gateway_options[:originator]
-      if capture_payment(payment.number)
-        ActiveMerchant::Billing::Response.new(true, "Capture Successful", params, options)
-      else
-        ActiveMerchant::Billing::Response.new(false, "Capture Error", params, options)
-      end
-    end
+    #   payment = gateway_options[:originator]
+    #   if capture_payment(payment.number)
+    #     ActiveMerchant::Billing::Response.new(true, "Capture Successful", params, options)
+    #   else
+    #     ActiveMerchant::Billing::Response.new(false, "Capture Error", params, options)
+    #   end
+    # end
 
     # We want to automatically capture the payment when the order is completed
     def auto_capture
