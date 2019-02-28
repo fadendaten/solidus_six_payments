@@ -1,10 +1,11 @@
 Spree::Core::Engine.routes.draw do
 
-  get 'checkout/payment', to: 'six_saferpay_payment_page#initialize_payment'
+  # get 'checkout/payment', to: 'six_saferpay_payment_page#external_payment'
 
-  scope :six_saferpay do
-    get 'success', controller: 'six_saferpay_payment_page', as: :confirm_saferpay
-    get 'fail', controller: 'six_saferpay_payment_page', as: :cancel_saferpay
+  scope :saferpay_payment_page do
+    get 'init', controller: 'saferpay_payment_page'
+    get 'success', controller: 'saferpay_payment_page'
+    get 'fail', controller: 'saferpay_payment_page'
   end
 
 end

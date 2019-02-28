@@ -1,8 +1,8 @@
 module Spree
-  class PaymentMethod::SixPaymentPage < Spree::PaymentMethod::CreditCard
+  class PaymentMethod::SaferpayPaymentPage < Spree::PaymentMethod::CreditCard
 
     def gateway_class
-      PaymentMethod::SixPaymentPage
+      PaymentMethod::SaferpayPaymentPage
     end
 
     def payment_source_class
@@ -14,7 +14,7 @@ module Spree
     end
 
     def partial_name
-      :sixpaymentpage
+      :saferpay_payment_page
     end
 
 

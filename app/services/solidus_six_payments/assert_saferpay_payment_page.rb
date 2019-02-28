@@ -57,7 +57,7 @@ module SolidusSixPayments
       payment_attributes = {
         amount: normalized_amount(transaction[:Amount][:Value]),
         number: transaction[:Id], # NOTE: this will be overridden, we need to update it after creating the payment
-        payment_method_id: Spree::PaymentMethod.find_by(type: 'Spree::PaymentMethod::SixPaymentPage').id,
+        payment_method_id: Spree::PaymentMethod.find_by(type: 'Spree::PaymentMethod::SaferpayPaymentPage').id,
         source_attributes: {
           imported: true, # necessary because we don't want to validate CVV
           number: payment_means[:DisplayText],
